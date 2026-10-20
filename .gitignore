@@ -8,7 +8,7 @@ venv/
 !.env.example
 
 # Python cache files
-**pycache**/
+__pycache__/
 *.py[cod]
 *$py.class
 
