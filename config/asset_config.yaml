@@ -1,0 +1,47 @@
+# Asset configuration
+asset:
+  ticker: "LLOY.L"
+  exchange: "LSE"
+  country: "UK"
+  currency: "GBP"
+
+# Historical data configuration
+data:
+  provider: "yfinance"
+  start_date: "2015-01-01"
+  end_date: "2026-10-23"
+  interval: "1d"
+
+# Forecasting configuration
+forecasting:
+  horizons: [1, 5, 10]
+  target_type: "forward_return"
+
+# Model configuration
+models:
+  machine_learning:
+    enabled: true
+    candidates:
+      - "LinearRegression"
+      - "Ridge"
+      - "RandomForest"
+      - "XGBoost"
+      - "LightGBM"
+
+  deep_learning:
+    enabled: true
+    candidates:
+      - "MLP"
+      - "LSTM"
+      - "GRU"
+      - "CNN"
+
+# Evaluation configuration
+evaluation:
+  method: "walk_forward"
+  prevent_data_leakage: true
+
+# Portfolio configuration
+portfolio:
+  initial_capital: 1000
+  currency: "GBP"
