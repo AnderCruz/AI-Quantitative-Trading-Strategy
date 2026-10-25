@@ -14,3 +14,4 @@ PyYAML==6.0.3
 pandas_market_calendars==5.5.0
 scikit-learn==1.8.0
 scipy==1.17.1
+matplotlib
