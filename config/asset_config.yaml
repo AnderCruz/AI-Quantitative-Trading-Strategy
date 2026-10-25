@@ -41,6 +41,7 @@ evaluation:
   method: "walk_forward"
   prevent_data_leakage: true
 
+
 # Portfolio configuration
 portfolio:
   initial_capital: 1000
