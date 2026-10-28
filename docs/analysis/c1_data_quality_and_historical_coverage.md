@@ -1,43 +1,31 @@
 # C1 — Final Data Quality Decision
 
-## Decision
+## Documented OHLC Anomalies — Accepted with Limitations
 
-**Status: CONDITIONALLY ACCEPTED FOR PREDICTIVE RESEARCH**
+Three historical observations in the configured `LLOY.L` dataset violate the expected OHLC price relationships.
 
-The configured `LLOY.L` historical dataset is conditionally accepted for the project's predictive research phase. The decision is based on the completed structural checks, historical coverage assessment, temporal eligibility audit, feature and target integration checks, and documented review of the three known OHLC inconsistencies.
+| Date       |    Open |    High |     Low |   Close | Inconsistency    |
+| ---------- | ------: | ------: | ------: | ------: | ---------------- |
+| 2015-03-31 | 79.3900 | 79.6500 | 78.3000 | 78.2800 | Close below Low  |
+| 2020-06-15 | 30.4450 | 32.9400 | 30.8900 | 31.5300 | Open below Low   |
+| 2024-05-01 | 52.1000 | 52.1400 | 51.9800 | 52.2000 | Close above High |
 
-This decision does not certify that the complete historical price series is free from errors. Full reconciliation of historical corporate actions and independent verification of all historical prices have not been completed.
+**Decision**
 
-## Evidence Reviewed
+The project will retain these observations without modifying or deleting the original market data. The anomalies are considered a documented limitation for the current research scope, and no further investigation into their individual causes will be undertaken at this stage.
 
-* Historical dataset: 2,985 observations from 2 January 2015 to 23 October 2026.
-* Market-data source: Yahoo Finance via `yfinance`.
-* Three documented OHLC inconsistencies: 31 March 2015, 15 June 2020 and 1 May 2024.
-* Temporal periods, target maturity and walk-forward eligibility checks completed.
-* Automated tests: 95 passed in the recorded test run.
-* The source dataset remains unchanged.
+A dependency analysis identified a limited number of potentially affected feature observations and forward-return targets. This establishes the scope of potential exposure, but does not demonstrate that every dependent feature or target is numerically incorrect.
 
-## Known Limitations
+**Controls**
 
-The three OHLC inconsistencies remain unexplained. The historical relationship between raw and adjusted prices, dividend records, stock splits and other corporate actions has not been fully reconciled.
+* Preserve the original OHLC values.
+* Retain the three dates in the project's data-quality documentation.
+* Do not automatically classify the anomalies as corporate-action effects.
+* Do not silently correct, remove, or replace the observations.
+* Reconsider the decision if future evidence indicates a material effect on model evaluation or simulated execution.
 
-The existing preliminary impact analysis identified potentially affected features and targets. Its results are indicative and do not establish that every potentially exposed observation is materially incorrect.
+**Scope and limitation**
 
-The approved forecasting targets continue to represent gross price returns based on the specified Open and Close prices. Dividend cash flows, transaction costs, slippage and taxes are not included in those target returns.
+This decision is a documented acceptance of a known data limitation for continued research. It is not a declaration that the historical price series is error-free, nor does it independently establish that the dataset has passed all data-quality or corporate-action checks.
 
-## Conditions of Use
-
-1. Preserve the original historical dataset and all three documented anomalies.
-2. Do not silently correct or delete anomalous observations.
-3. Retain the approved target definition and temporal-validation design.
-4. Document these data limitations when interpreting model evaluation results.
-5. Do not interpret forecasting performance as evidence of net trading profitability.
-6. Reassess data eligibility only if subsequent evidence identifies a material issue affecting the validity of the analysis.
-
-Dividend-inclusive portfolio accounting and realistic execution simulation require appropriate treatment of corporate actions, transaction costs and other relevant trading assumptions.
-
-## Final Assessment
-
-C1 is closed with a conditional acceptance for predictive research. No claim is made that the historical price series has been fully certified or that the resulting models will be profitable.
-
-**Final status: CONDITIONALLY ACCEPTED FOR PREDICTIVE RESEARCH.**
+**Status:** Three OHLC anomalies documented; original observations retained; further investigation deferred.

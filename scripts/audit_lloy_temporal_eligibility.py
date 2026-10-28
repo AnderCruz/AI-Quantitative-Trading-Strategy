@@ -1,6 +1,5 @@
 """Audit temporal periods and target maturity for LLOY.L."""
 
-from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -36,7 +35,6 @@ maturity_dates = get_target_maturity_dates(
 # Derive contiguous temporal periods from the available history.
 periods = get_temporal_periods(
     history,
-    reference_date=date(2026, 10, 23),
     development_years=7,
     validation_years=2,
     final_test_years=1,

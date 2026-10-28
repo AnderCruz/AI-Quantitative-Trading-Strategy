@@ -1,18 +1,6 @@
 """Define reproducible temporal periods for model development and evaluation."""
 
 from datetime import date, datetime, timedelta
-from zoneinfo import ZoneInfo
-
-
-# Define the fixed development and validation boundaries.
-DEVELOPMENT_START = date(2015, 1, 2)
-DEVELOPMENT_END = date(2023, 12, 31)
-
-VALIDATION_START = date(2024, 1, 1)
-VALIDATION_END = date(2025, 12, 31)
-
-FINAL_TEST_START = date(2026, 1, 1)
-
 
 def get_temporal_periods(
     history,
@@ -35,7 +23,7 @@ def get_temporal_periods(
 
     # Validate the reference date.
     if reference_date is None:
-        reference_date = datetime.now(ZoneInfo("Europe/London")).date()
+        reference_date = get_last_available_session(history)
 
     if not isinstance(reference_date, date) or isinstance(
         reference_date, datetime
@@ -181,17 +169,7 @@ def get_last_available_session(
     if history.empty:
         raise ValueError("Historical data cannot be empty.")
 
-    # Resolve the reference date using the existing London-time convention.
-    if reference_date is None:
-        reference_date = datetime.now(ZoneInfo("Europe/London")).date()
-
-    # Reject datetime values and other types where a plain date is required.
-    if not isinstance(reference_date, date) or isinstance(
-        reference_date, datetime
-    ):
-        raise TypeError("reference_date must be a datetime.date instance.")
-
-    # Convert historical dates and reject missing or invalid values.
+    # Parse historical dates before selecting the default reference.
     try:
         parsed_dates = pd.to_datetime(
             history["date"],
@@ -202,6 +180,16 @@ def get_last_available_session(
 
     if parsed_dates.isna().any():
         raise ValueError("Historical data contains missing dates.")
+
+    # Use the latest historical calendar date when no reference is supplied.
+    if reference_date is None:
+        reference_date = max(parsed_dates.dt.date)
+
+    # Reject datetime values and other types where a plain date is required.
+    if not isinstance(reference_date, date) or isinstance(
+        reference_date, datetime
+    ):
+        raise TypeError("reference_date must be a datetime.date instance.")
 
     # Compare calendar dates, excluding any time component.
     calendar_dates = parsed_dates.dt.date

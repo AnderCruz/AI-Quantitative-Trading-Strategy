@@ -510,3 +510,49 @@ def test_training_eligibility_rejects_invalid_period_boundaries():
             period_end=date(2024, 1, 1),
             cutoff_date=date(2024, 1, 5),
         )
+
+def test_last_available_session_defaults_to_latest_history_date():
+    """Use the latest historical date when no reference is supplied."""
+    import pandas as pd
+
+    from src.temporal_split import get_last_available_session
+
+    history = pd.DataFrame({
+        "date": [
+            "2026-10-21",
+            "2026-10-23",
+            "2026-10-26",
+        ]
+    })
+
+    result = get_last_available_session(history)
+
+    assert result == date(2026, 10, 26)
+
+
+def test_temporal_periods_default_to_latest_history_date():
+    """Anchor temporal periods to the latest historical session by default."""
+    history = _synthetic_history()
+
+    periods = get_temporal_periods(history)
+
+    assert periods["final_test"][1] == date(2026, 10, 23)
+
+
+def test_temporal_periods_default_updates_with_history_endpoint():
+    """Update default period boundaries when the history endpoint changes."""
+    import pandas as pd
+
+    history = _synthetic_history()
+
+    first_periods = get_temporal_periods(history)
+
+    shortened_history = history.loc[
+        pd.to_datetime(history["date"]).dt.date <= date(2025, 10, 23)
+    ].copy()
+
+    second_periods = get_temporal_periods(shortened_history)
+
+    assert first_periods["final_test"][1] == date(2026, 10, 23)
+    assert second_periods["final_test"][1] == date(2025, 10, 23)
+    assert first_periods != second_periods
