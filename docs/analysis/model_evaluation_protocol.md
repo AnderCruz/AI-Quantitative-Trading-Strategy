@@ -1,410 +1,313 @@
 # Model Evaluation Protocol
 
+**Project:** AI Quantitative Trading & Decision Intelligence System  
+**Pilot asset:** `LLOY.L` (Lloyds Banking Group, London Stock Exchange, GBP)  
+**Status:** Revised consolidated draft — five approved review adjustments incorporated  
+**Normative relationship:** Detailed evaluation reference under `model_development_and_evaluation_protocol.md`  
+**Scope:** Forecast metrics, baselines, paired comparison, uncertainty, sample adequacy and reporting  
+**Not authorised by this document:** Model training, confirmatory evaluation execution, backtesting, paper trading or live trading
+
 ## 1. Purpose and Scope
 
-This document defines the evaluation methodology for the AI Quantitative Trading & Decision Intelligence System.
+This document specifies how return forecasts and, once dataset readiness has been verified, binary positive-return probabilities are evaluated. It defines metric conventions, baseline comparisons, paired samples, statistical uncertainty, multiple-testing controls and reporting requirements.
 
-The protocol establishes the primary and complementary forecasting metrics, baseline models, temporal aggregation rules, statistical comparison principles, and model authorisation requirements.
+The approved horizons are 1, 5 and 10 trading sessions. Each horizon must be evaluated separately. Forecasting performance must be distinguished from economic performance: this protocol does not establish that a trading strategy is profitable.
 
-The initial pilot asset is Lloyds Banking Group (`LLOY.L`), listed on the London Stock Exchange and traded in GBP.
+The primary normative development process and approval gates are defined in `model_development_and_evaluation_protocol.md`. The temporal validation strategy and feature/target contracts remain applicable.
 
-The system is intended to forecast returns over 1-, 5- and 10-trading-session horizons. Forecast evaluation must distinguish predictive performance from trading profitability.
+## 2. General Evaluation Rules
 
-This document defines the evaluation methodology. It does not authorise model training, hyperparameter optimisation, backtesting, trading signal generation or paper trading.
+1. Respect chronological information availability and target maturity.
+2. Evaluate only matured realised outcomes; pending labels remain pending.
+3. Record forecasts before the corresponding outcomes are evaluated.
+4. Compare models on common valid forecast dates and realised targets wherever possible.
+5. Report each horizon independently.
+6. Record missing, invalid and excluded forecasts; do not silently convert them to zero or compare materially different samples without disclosure.
+7. Account for dependence caused by overlapping multi-session targets.
+8. Freeze the evaluation rules before examining the relevant confirmatory results.
+9. Keep the Final Test isolated from model, feature, preprocessing, hyperparameter, threshold and strategy selection.
+10. Do not interpret statistical significance as proof of practical value or trading profitability.
 
-## 2. Forecast Evaluation Principles
+A return must use a consistent numerical representation. For example, `0.01` represents a 1% return.
 
-The following principles govern model evaluation:
+## 3. Regression Metrics
 
-1. All evaluation must respect chronological information availability.
-2. Training labels must have fully matured by the relevant training cutoff.
-3. Forecasts must be recorded before their future outcomes are evaluated.
-4. Each forecast horizon must be evaluated independently.
-5. Models must be compared against predefined baselines.
-6. Comparisons must use common observations wherever possible.
-7. Pending targets must not contribute to completed evaluation metrics.
-8. Temporal dependence must be considered when estimating statistical uncertainty.
-9. Final Test outcomes must not influence model selection, feature selection, hyperparameter optimisation, threshold selection or strategy refinement.
-10. Forecasting performance must not be interpreted as evidence of trading profitability.
+### 3.1 Primary metrics
 
-The evaluation methodology and model-selection rules must be established before the corresponding results are examined.
+The primary regression metrics are Mean Absolute Error (MAE) and Root Mean Squared Error (RMSE).
 
-## 3. Primary and Complementary Metrics
+For realised returns \(y_i\) and predictions \(\hat y_i\):
 
-### 3.1. Primary Metrics
+\[
+MAE=\frac{1}{N}\sum_{i=1}^{N}|y_i-\hat y_i|
+\]
 
-The primary metrics are Mean Absolute Error (MAE) and Root Mean Squared Error (RMSE).
+\[
+RMSE=\sqrt{\frac{1}{N}\sum_{i=1}^{N}(y_i-\hat y_i)^2}
+\]
 
-For observations with predicted returns `y_hat` and realised returns `y`:
+MAE measures average absolute error. RMSE gives greater weight to large errors. Lower values indicate smaller errors on the same evaluation sample. MAE and RMSE must be calculated separately by horizon and on the same paired sample for model comparisons.
 
-`MAE = mean(abs(y - y_hat))`
+### 3.2 Complementary metrics
 
-`RMSE = sqrt(mean((y - y_hat)^2))`
+- **Directional Accuracy (DA):** percentage of forecasts whose predicted-return sign agrees with the realised-return sign.
+- **Spearman rank correlation:** rank association between predicted and realised returns.
+- **Out-of-sample \(R^2\):** diagnostic comparison with the mean of the evaluated outcomes; a negative value is valid and must not be treated as a software error.
+- **Mean forecast error:** optional diagnostic for systematic over- or under-prediction.
 
-MAE measures the average absolute forecasting error. RMSE gives greater weight to larger errors.
+No single metric establishes overall model quality. Correlation and directional performance do not replace return-error metrics. Undefined or uninformative metrics—for example, because of insufficient variation—must be reported as undefined with a reason, not replaced by an artificial value.
 
-Both metrics must be calculated separately for each forecast horizon.
+### 3.3 Directional Accuracy: exact convention
 
-The return values must use a consistent numerical representation throughout evaluation. For example, a return of 0.01 represents 1%.
+For \(N\) paired valid forecasts:
 
-### 3.2. Complementary Metrics
+\[
+DA=\frac{1}{N}\sum_{i=1}^{N}
+\mathbb{1}\left[\operatorname{sign}(\hat R_i)=\operatorname{sign}(R_i)\right]\times100
+\]
 
-The following metrics provide additional diagnostic information.
+The following rules are mandatory:
 
-**Directional Accuracy**
+| Predicted return | Realised return | Correct? |
+|---|---|---|
+| Positive | Positive | Yes |
+| Negative | Negative | Yes |
+| Positive | Negative | No |
+| Negative | Positive | No |
+| Zero | Non-zero | No |
+| Non-zero | Zero | No |
+| Zero | Zero | Yes |
 
-Measures the proportion of evaluated observations for which the predicted and realised return directions agree.
+Do not round predictions or realised returns before calculating signs. Missing or invalid predictions and invalid realised targets are excluded from the DA denominator and must be counted and reported under the missing-prediction policy.
 
-The treatment of zero predictions and zero realised returns must be defined before implementation.
+DA is computed separately by horizon and on common dates for each model comparison. For the Zero Return baseline, DA equals the proportion of realised returns that are exactly zero under the numerical target representation; this is not evidence of directional skill. The implementation must use a consistent, explicitly documented exact-zero convention and must not introduce an undocumented tolerance.
 
-**Spearman Rank Correlation**
+## 4. Classification Metrics
 
-Measures the rank association between predicted and realised returns.
+Classification evaluation is permitted only after the dataset preparation outputs have been verified to include `positive_return_1d`, `positive_return_5d` and `positive_return_10d`, their maturity status and horizon-specific eligibility.
 
-It may be uninformative or undefined when there is insufficient variation or too few valid observations. Such cases must be reported explicitly rather than converted into artificial values.
+The label is 1 when the realised return is strictly positive and 0 when it is zero or negative. Invalid or unavailable returns produce missing labels. The model must not learn from labels that were not mature at the applicable training cutoff.
 
-**Coefficient of Determination (R²)**
+Report, as applicable:
 
-Measures predictive performance relative to the mean of the evaluated observations.
+- Brier score;
+- log loss;
+- ROC-AUC;
+- balanced accuracy;
+- precision and recall;
+- confusion matrix; and
+- positive-class prevalence.
 
-R² may be negative for out-of-sample forecasts. A negative value must be reported as a valid diagnostic result rather than treated as a software error.
+Probability-based metrics should be prioritised for probability forecasts. Accuracy alone is insufficient where class frequencies are unequal. Metrics that are undefined because only one actual class is present must be reported as undefined, with the sample limitation disclosed. Report metrics separately for each horizon and state the decision threshold for threshold-dependent metrics. Any threshold selection must use permitted Development/Validation data, never Final Test outcomes.
 
-### 3.3. Metric Interpretation
+The classification baseline is a constant probability equal to the positive-class prevalence among eligible, matured training labels at the relevant cutoff and horizon. Logistic Regression is the first supervised classification candidate after the baseline and data-readiness gate.
 
-No individual metric is sufficient to establish overall model quality.
+## 5. Required Baselines
 
-A model may correctly predict the direction of returns while substantially misestimating their magnitude. Conversely, a model may achieve a relatively low return-prediction error without providing a useful directional advantage.
+### 5.1 Zero Return
 
-Metric definitions, edge-case handling and aggregation rules must be implemented consistently across models and baselines.
+Predicts zero return for every observation. This is the neutral regression benchmark.
 
-The minimum sample sizes required for reporting each metric remain to be specified.
+### 5.2 Historical Mean
 
-## 4. Baseline Models
+Predicts the mean of eligible, matured historical target values available by the relevant training/forecast cutoff, calculated separately by horizon.
 
-Three initial baselines are proposed.
+### 5.3 Historical Median
 
-### 4.1. Zero Return
+Predicts the median of eligible, matured historical target values available by the relevant cutoff and horizon. It provides a robust complementary location benchmark.
 
-The predicted return is zero for every forecast.
+### 5.4 First supervised regression model
 
-This baseline establishes whether a forecasting model improves upon a neutral return prediction.
+Ridge Regression is the first supervised trainable regression model in the approved initial sequence. The practical sequence is Zero Return, Historical Mean, then Ridge Regression; Historical Median remains a required comparison baseline.
 
-### 4.2. Historical Mean
+All baselines must respect the same cutoff, target maturity and observation rules as the candidate model. Baseline forecasts must be recorded and evaluated using the same target definitions. Their definitions must not be changed retrospectively to favour a candidate.
 
-The predicted return is the mean of eligible historical target values available at the relevant forecast or model-training cutoff.
+## 6. Temporal and Comparative Aggregation
 
-Only targets whose outcomes have fully matured by that cutoff may contribute to the estimate.
+### 6.1 Global results
 
-### 4.3. Historical Median
+For each horizon, report the complete eligible matured out-of-sample evaluation sample, with its date range, number of valid paired observations, pending target count, missing/invalid forecast count and exclusions.
 
-The predicted return is the median of eligible historical target values available at the relevant cutoff.
+### 6.2 Temporal results
 
-This provides a complementary reference that is less sensitive than the mean to extreme observations.
+Examine performance across calendar quarters and years where sample sizes permit. Temporal views are diagnostic for instability, degradation and regime dependence; they must not be presented as reliable estimates when the sample is inadequate. Apply the operational sample rules in Section 9 and disclose smaller windows.
 
-### 4.4. Baseline Requirements
+### 6.3 Paired comparisons
 
-All baselines must respect the same information-availability rules as the forecasting models.
+For a given comparison, use the same forecast dates and realised outcomes for both models wherever possible. Report the paired sample size. If either model lacks a valid forecast, record the missingness and exclude that date from the paired comparison unless a separately justified method is approved. Do not silently compare model metrics calculated on materially different samples.
 
-In particular:
+For regression, compare paired absolute errors and squared errors as appropriate to MAE and RMSE. For directional comparison, compare paired correctness indicators. Classification comparisons must also use common matured observations and compatible probability/label records.
 
-* Historical statistics must not use future observations.
-* Target maturity must be checked independently for each horizon.
-* Baseline predictions must be recorded and evaluated using the same outcome definitions as model predictions.
-* Comparisons must use common evaluation observations wherever possible.
-* The baseline definitions must not be retrospectively changed to favour a particular model.
+### 6.4 Overlapping horizons
 
-The detailed implementation of the baselines remains subject to review before modelling is authorised.
+Adjacent 5- and 10-session targets overlap in the underlying future price periods. Do not treat all forecast observations as independent merely because they have distinct timestamps. Preserve valid overlapping forecasts in the primary evaluation; account for dependence in inference. Any supplementary non-overlapping analysis must be clearly labelled and must not replace the principal evaluation without prior approval.
 
-## 5. Temporal Aggregation
+## 7. Statistical Inference and Multiple Comparisons
 
-Evaluation results must be reported at three levels.
+### 7.1 Significance level and interpretation
 
-### 5.1. Global Evaluation
+The initial significance level is \(\alpha=0.05\). Reports must distinguish the observed effect, uncertainty interval, statistical evidence and practical relevance. Statistical significance alone does not establish meaningful improvement or profitability.
 
-Global metrics summarise all eligible, matured out-of-sample forecasts for each horizon.
+For every paired comparison, define the difference direction before examining confirmatory results. Unless a comparison-specific definition is predeclared, use Model A minus Model B for reported metric differences. For error metrics, a negative difference then favours Model A; for Directional Accuracy and metrics where higher values are better, a positive difference favours Model A. State the convention beside each reported estimate and interval. Interpret an interval in relation to the statistic it actually estimates: an interval excluding zero may support evidence of a difference under the applicable valid procedure, but does not by itself establish that the difference favours the candidate, is practically meaningful, or implies economic value. Apply the predeclared multiple-testing procedure where relevant. Do not infer equivalence from a non-significant result.
 
-Each horizon must have its own results, observation count and pending-target count.
+### 7.2 HAC/Newey–West inference
 
-### 5.2. Temporal Evaluation
+Heteroskedasticity and Autocorrelation Consistent (HAC) inference using Newey–West variance estimation is the principal analytical method for appropriate paired comparisons.
 
-Results should also be examined across calendar quarters and years where sufficient observations are available.
+The initial lag rule is:
 
-Temporal reporting is intended to identify changes in performance, periods of deterioration and instability that may be obscured by aggregate metrics.
+\[
+L_h=h-1
+\]
 
-The minimum sample size for publishing temporal metrics remains to be specified.
+| Horizon | Primary HAC lag |
+|---|---:|
+| 1 session | 0 |
+| 5 sessions | 4 |
+| 10 sessions | 9 |
 
-Periods with insufficient observations must be identified explicitly rather than presented as reliable performance estimates.
+Use the same principal lag within the same horizon and confirmatory test family. Sensitivity analyses use lags 5 and 9 for the 5-session horizon, and 14 and 19 for the 10-session horizon. For the 1-session horizon, higher lags may be examined only with a prior documented justification.
 
-### 5.3. Comparative Evaluation
+Where suitable, conduct inference on paired loss differences, including absolute-error and squared-error differences. For DA, define each model’s correctness indicator on each common valid date as 1 when the predicted and realised signs match under the exact-zero convention in Section 3.3, and 0 otherwise. The paired DA difference is the mean of the date-level differences between the two models’ correctness indicators, expressed in percentage points when reported as a percentage difference. Use a method suitable for paired binary outcomes and temporal dependence, such as HAC/Newey–West inference on the paired correctness-indicator differences and/or the paired temporal block bootstrap specified below. Report the estimated difference, its direction, uncertainty interval and applicable test results. Do not apply a regression-loss test mechanically to a different outcome.
 
-Model comparisons must use the same forecast dates and realised outcomes wherever possible.
+For regression comparisons, define the loss difference consistently before inference—for example, Model A loss minus Model B loss—so that the sign’s meaning is unambiguous. For MAE, analyse paired absolute-error differences; for MSE/RMSE-related comparisons, analyse paired squared-error differences where appropriate, while clearly identifying whether the inferential target is MSE or RMSE. The lag rule is an initial operational specification, not a guarantee that dependence is fully captured. If evidence or the evaluation design suggests longer dependence, report sensitivity analyses and/or use the block-bootstrap procedure below. If the assumptions required for valid inference are not credible, label the result inconclusive.
 
-If a model fails to produce a valid forecast for a particular observation, the missing forecast must be recorded.
+### 7.3 Moving Block Bootstrap (MBB)
 
-Comparative results must disclose the number of observations used and must not silently compare models on materially different samples.
+Moving Block Bootstrap is the principal bootstrap procedure and complements, rather than replaces, HAC/Newey–West analysis.
 
-Global metrics, temporal metrics and pairwise comparisons must be reported separately.
+Primary block length is \(b_h=h\):
 
-## 6. Statistical Model Comparison
+| Horizon | Primary block length | Sensitivity block lengths |
+|---|---:|---|
+| 1 session | 1 session | 2 and 5, only where justified |
+| 5 sessions | 5 sessions | 10 and 15 |
+| 10 sessions | 10 sessions | 20 and 30 |
 
-### 6.1. Paired Comparisons
+Planned resampling counts are:
 
-Models must be compared using paired observations and consistent loss definitions.
+- 2,000 replications for initial procedural development and tests;
+- 5,000 replications for exploratory evaluation; and
+- 10,000 replications for confirmatory evaluation.
 
-For example, the absolute forecasting error for each model can be calculated on the same realised target observations. Differences between the resulting losses provide a basis for comparing forecasting performance.
+Use two-sided 95% percentile confidence intervals for the predeclared statistic or paired difference being estimated. Set an explicit random-number-generator seed. The proposed global baseline seed is `20261028`; derive each run’s seed deterministically from that global seed and a stable run identifier. These settings must be recorded and not changed in response to which configuration gives the most favourable result.
 
-Primary comparisons will examine differences in MAE and RMSE.
+The bootstrap estimands must be named explicitly in the report. They may include MAE and RMSE for an individual model, paired differences in MAE, paired differences in mean squared error (MSE), differences in Directional Accuracy, and applicable classification metrics or paired metric differences. For RMSE comparisons, distinguish the reported RMSE difference from inference conducted on paired squared-error differences: an interval or test for a mean squared-error difference is not automatically an interval or test for the RMSE difference. If an interval for a difference in RMSE is reported, calculate that statistic within each paired bootstrap replicate and report it as such. For every interval, state the statistic, the comparison direction and the sign convention.
 
-Complementary comparisons may examine directional accuracy and Spearman rank correlation where their assumptions and sample sizes permit meaningful interpretation.
+The resampling unit must preserve the paired temporal observations required by the comparison: realised target, forecasts from each compared model, relevant errors/losses and directional-correctness indicators. Resample temporal blocks while preserving the order within each block. Do not bootstrap each model’s errors independently. Define temporal continuity using the trading-session index, not merely adjacent rows in a filtered table. Do not construct blocks across missing sessions, gaps or excluded segments as though they were consecutive. Where gaps exist, apply a documented segmentation or other predeclared handling rule, and report the resulting eligible segments and exclusions. Do not silently bridge gaps or treat missing observations as adjacent.
 
-### 6.2. Temporal Dependence
+Record at least: algorithm and implementation/library versions, seed, block length, replication count, confidence level, horizon, compared models, evaluation date range, valid paired sample count, exclusions/missingness, temporal segments used, data and code versions, Python/library versions, the estimand/statistic and comparison sign convention, outputs and warnings.
 
-Forecast errors may be temporally dependent, particularly for the 5- and 10-session horizons.
+### 7.4 Bootstrap adequacy and inconclusive results
 
-Statistical procedures must therefore account for dependence where appropriate.
+- Fewer than 100 valid paired observations: no confirmatory inference; if explored, label the evidence highly limited.
+- 100–199 valid paired observations: exploratory inference only.
+- At least 200 valid paired observations: eligible for consideration as confirmatory, subject to all other requirements.
 
-Two candidate approaches are:
+A nominal sample threshold does not guarantee an adequate effective number of temporal blocks, statistical power or regime coverage. Results must be treated as inconclusive when block coverage is inadequate, gaps or missingness undermine resampling, only a few regimes are represented, confidence intervals are too wide, results are unstable across justified block lengths, or the conclusion is excessively sensitive to assumptions. Do not choose a block length retrospectively because it produces a favourable p-value or interval. Final Test results must never be used to tune the resampling design.
 
-* Heteroskedasticity and Autocorrelation Consistent (HAC) variance estimation, including Newey–West methods where suitable.
-* Block bootstrap procedures that resample temporal blocks rather than treating individual observations as independent.
+### 7.5 Multiple testing
 
-The appropriate implementation, dependence assumptions, block-length selection and other statistical parameters must be specified before confirmatory comparisons are conducted.
+Holm is the primary family-wise error control procedure for confirmatory hypothesis families. Benjamini–Hochberg may be used for suitable exploratory families. Bonferroni is a supplementary reference method.
 
-Neither method should be applied mechanically without checking its suitability for the evaluation design.
+The precise membership of each hypothesis family—including model-to-model and model-to-baseline comparisons across horizons and metrics—must be documented before confirmatory results are examined. Do not choose family boundaries or corrections retrospectively to favour a candidate.
 
-### 6.3. Interpretation of Statistical Evidence
+## 8. Sample Adequacy
 
-Reports must distinguish:
+The following operational minimums apply separately by horizon and by the relevant eligible or paired sample. They are not guarantees of statistical power.
 
-* The observed difference in forecasting performance.
-* The estimated uncertainty of that difference.
-* The statistical evidence supporting or contradicting superiority.
-* The limitations of the sample and method.
+| Activity | Minimum |
+|---|---:|
+| Regression training | 500 eligible observations |
+| Classification training | 500 eligible observations and at least 100 observations in each class |
+| Exploratory regression evaluation | 100 paired valid forecasts |
+| Confirmatory regression evaluation | 200 paired valid forecasts |
+| Exploratory classification evaluation | 100 paired forecasts and at least 20 observations in each actual class |
+| Confirmatory classification evaluation | 200 paired forecasts and at least 50 observations in each actual class |
 
-Statistical significance alone does not establish practical importance or trading profitability.
+If the applicable threshold is not met, block training or restrict the evaluation claim as appropriate and log the reason. Statistical power and effective independent information must also be considered. A nominally adequate sample may still be insufficient because of temporal dependence, missingness, unstable performance or narrow market-regime coverage.
 
-The significance level, any minimum practically meaningful improvement and the treatment of multiple comparisons remain to be specified.
+## 9. Missing Forecasts, Pending Outcomes and Reporting
 
-### 6.4. Multiple Comparisons
+Pending labels must not be treated as realised outcomes. A forecast enters completed evaluation only when the corresponding target has matured and the outcome is available and valid.
 
-Comparing several models across multiple horizons and metrics creates a risk of selecting an apparently superior model by chance.
+Each horizon’s report must include:
 
-The evaluation protocol must define how multiple comparisons will be handled before the relevant results are examined.
+- evaluation start and end dates;
+- number of matured target observations;
+- number of pending outcomes excluded;
+- number of missing and invalid forecasts;
+- number of paired valid observations used for each comparison;
+- baseline and candidate metrics;
+- model, data and code version identifiers;
+- applicable confidence intervals, test statistics and adjusted p-values;
+- statistical method, lags/block length, replication count and seed where relevant;
+- temporal-window results and sample limitations; and
+- warnings, exclusions and reasons for inconclusive results.
 
-The procedure must not be changed retrospectively to favour a selected candidate.
+A metric that cannot be validly calculated must be marked undefined/not available with its reason, not filled with a convenient numeric value. Results from different horizons must not be combined without a predeclared and documented aggregation method.
 
-## 7. Overlapping Forecast Horizons
+## 10. Model-Family Selection and Interpretation
 
-Forecasts are generated after each observed trading session, while some target horizons span multiple sessions.
+Model-family selection must be based on Development and walk-forward Validation evidence, not on Final Test outcomes. Consider engineering correctness, performance relative to the predefined baselines, primary metrics, complementary diagnostics, uncertainty, temporal stability, sample adequacy and reproducibility.
 
-Consequently, consecutive 5- and 10-session targets overlap in their underlying future price periods.
+Results must be classified appropriately:
 
-These observations must not automatically be treated as statistically independent.
+- **Evidence supporting superiority:** robust improvement under the predeclared comparison procedure; supports further consideration but does not authorise deployment or prove profitability.
+- **Inconclusive evidence:** neither sufficiently robust superiority nor inferiority is established. This is not proof of equivalence.
+- **Evidence of inferiority:** the candidate performs worse under the predeclared criteria and must not be described as superior on those results.
 
-The following rules apply:
+Quantitative minimum practically meaningful improvement and model-family acceptance thresholds remain to be specified and approved before confirmatory evaluation. They must not be set retrospectively after reviewing Final Test outcomes.
 
-1. Preserve all valid forecasts in the forecast record.
-2. Evaluate the 1-, 5- and 10-session horizons independently.
-3. Identify the overlapping nature of the longer-horizon outcomes in evaluation reports.
-4. Do not interpret the number of forecasts as the number of independent observations.
-5. Account for temporal dependence in statistical uncertainty estimates and model comparisons where appropriate.
-6. Do not remove valid overlapping forecasts solely to create an appearance of independence.
+Model-family approval is separate from authorisation of an individual trained model version. Engineering checks are not evidence of predictive superiority.
 
-Any supplementary non-overlapping analysis must be documented separately and must not replace the principal evaluation without prior approval.
+## 11. Final Test Procedure and Isolation
 
-## 8. Model-Family Approval
+Before Final Test evaluation, freeze and record:
 
-Approval of a model family concerns the suitability of its modelling and evaluation methodology.
+1. feature specification;
+2. preprocessing pipeline;
+3. model family and configuration;
+4. forecast and evaluation metrics;
+5. aggregation and missingness rules;
+6. statistical tests, lag/block rules, hypothesis families and multiple-testing procedure;
+7. training/evaluation boundaries and target-maturity rules; and
+8. experiment identifier, data provenance, code version and random seeds.
 
-It is distinct from the operational authorisation of an individual trained model version.
+Final Test outcomes must not be used for feature selection, preprocessing design, hyperparameter optimisation, model-family selection, threshold selection, strategy refinement or evaluation-rule tuning. Only matured outcomes contribute to completed metrics; pending outcomes remain separate.
 
-A model family must not be selected solely because it achieves the best result on one metric or during one period.
+Any revision prompted by Final Test results is a new research iteration. The same period must not be presented as an untouched test set for a revised model or evaluation design.
 
-The model-family evaluation must address:
+## 12. Reproducibility and Implementation Readiness
 
-* Compliance with the approved target definitions.
-* Feature availability and data-leakage controls.
-* Correct temporal eligibility and preprocessing.
-* Comparison against the predefined baselines.
-* Primary and complementary forecasting metrics.
-* Performance across the approved forecast horizons.
-* Temporal stability and uncertainty.
-* The limitations and reproducibility of the results.
+The evaluation implementation must produce deterministic, auditable records for forecasts, realised outcomes, paired comparison samples, metric calculations, statistical tests and exclusions. Record experiment identifiers, asset/data versions, target horizon, split boundaries, feature/preprocessing configuration, model version, cutoff, eligible and evaluated sample counts, random seed, software environment, code revision, warnings and failures.
 
-Model selection must use Development and Walk-forward Validation according to the approved temporal protocol.
+Before classification implementation, verify that the dataset preparation outputs include the three classification labels, their maturity state and eligibility. This protocol is a specification; it is not evidence that HAC, bootstrap, classification or confirmatory evaluation code has been implemented or executed.
 
-The Final Test must remain isolated from model-family selection and related design decisions.
+## 13. Authorisation Boundary
 
-Quantitative selection thresholds and the precise model-family approval procedure remain to be specified and approved before modelling begins.
+This protocol does not itself authorise model training, confirmatory evaluation execution, backtesting, paper trading or live trading. The project’s separate gates remain in force:
 
-## 9. Trained-Model Operational Authorisation
+- **Gate A:** protocol approval;
+- **Gate B:** implementation review;
+- **Gate C:** explicit model-training authorisation;
+- **Gate D:** separate explicit backtesting authorisation.
 
-Operational authorisation applies to an individual trained model version.
+Paper trading and live trading require separate explicit approval. No model should be made operational merely because it has completed training or produced favourable evaluation metrics.
 
-Successful completion of training does not, by itself, authorise a model for forecasting.
+## 14. Open Items Before Confirmatory Evaluation
 
-Before authorisation, the candidate must pass all required controls.
+The following items remain open and must be resolved before confirmatory evaluation is authorised:
 
-### 9.1. Data Integrity
+1. the precise confirmatory hypothesis-family membership and comparison inventory;
+2. the minimum practically meaningful improvement for relevant primary comparisons;
+3. quantitative temporal-stability criteria and minimum evidence requirements;
+4. the power-analysis approach and assumptions, where used;
+5. implementation-level validation of the defined metric and inference procedures; and
+6. verification that the prediction-record contract and classification dataset outputs satisfy this protocol.
 
-The required data must be available and must pass the applicable quality checks.
-
-Unresolved data-quality failures must be handled according to a documented policy.
-
-### 9.2. Temporal Eligibility
-
-Training observations must satisfy the approved chronological boundaries and target-maturity rules.
-
-No target whose outcome was unknown at the training cutoff may be used as a training label.
-
-Eligibility must be calculated separately for each forecast horizon.
-
-### 9.3. Feature and Preprocessing Integrity
-
-Features must respect the approved information-availability rules.
-
-Fitted preprocessing transformations must use eligible training data only.
-
-Target columns and future-derived information must not be used as predictors.
-
-### 9.4. Training and Prediction Integrity
-
-The training process must complete successfully.
-
-The candidate must produce outputs that satisfy the defined prediction contract, including finite numerical values and valid output structure.
-
-The complete prediction contract and any additional domain-specific checks remain to be specified.
-
-### 9.5. Artefact and Provenance Integrity
-
-The model artefacts and associated configuration must be saved and verified.
-
-The system must record the model identifier, version, training cutoff, relevant data provenance and applicable configuration.
-
-### 9.6. Authorisation Decision
-
-A candidate that fails any mandatory operational control must not be authorised.
-
-The authorisation decision must be explicit and traceable.
-
-The previously approved retraining-failure policy remains in force: preserve the last successfully authorised model and its artefacts, do not activate it automatically for new forecasts after a retraining failure, record the failed attempt and missing forecast, and resume forecasting only after a model has passed the required checks and has been authorised.
-
-Operational checks must not be represented as proof of predictive superiority.
-
-## 10. Underperformance and Inconclusive Results
-
-Evaluation results must distinguish three broad outcomes.
-
-### 10.1. Evidence of Superiority
-
-The model demonstrates sufficiently robust improvement against the predefined baseline or baselines under the approved comparison procedure.
-
-Such evidence supports consideration of the model but does not, by itself, authorise deployment or establish trading profitability.
-
-### 10.2. Inconclusive Evidence
-
-The observed results do not establish sufficiently robust superiority or inferiority.
-
-The report must document the uncertainty and limitations. An inconclusive result must not be described as proof that the model is equivalent to the baseline.
-
-### 10.3. Evidence of Inferiority
-
-The model performs worse than the relevant baseline under the predefined evaluation criteria.
-
-It must not be selected as superior on the basis of those results.
-
-The applicable decision rules, quantitative thresholds and handling of conflicting metrics remain to be specified before model evaluation begins.
-
-Baselines, metrics and decision rules must not be changed retrospectively to favour a candidate.
-
-## 11. Final Test Isolation
-
-The Final Test period is reserved for final evaluation under the approved protocol.
-
-Final Test outcomes must not be used for:
-
-* Feature selection.
-* Preprocessing design based on observed outcomes.
-* Hyperparameter optimisation.
-* Model-family selection.
-* Threshold selection.
-* Strategy selection or iterative refinement.
-* Selection of evaluation rules intended to improve reported results.
-
-Predictions must be recorded according to the approved forecasting procedure.
-
-Targets that have not matured must remain pending. Only matured outcomes may contribute to completed evaluation metrics.
-
-Any proposal to use Final Test results to revise the system requires a separately documented evaluation design and explicit approval.
-
-## 12. Outstanding Decisions and Approval Gate
-
-### 12.1 Approved Methodological Decisions
-
-The following methodological decisions have been approved:
-
-1. Mean Absolute Error (MAE) and Root Mean Squared Error (RMSE) are the primary forecast evaluation metrics.
-2. Directional Accuracy, Spearman rank correlation and R-squared are complementary metrics.
-3. Zero Return, Historical Mean and Historical Median are the approved baseline forecasting methods.
-4. Forecast horizons of 1, 5 and 10 trading sessions must be evaluated independently.
-5. Comparisons between models must use common evaluation observations wherever a fair comparison is possible.
-6. The initial statistical significance level is 5% (\(\alpha = 0.05\)).
-7. HAC/Newey–West inference and block bootstrap procedures will be considered complementary approaches to temporal dependence and statistical uncertainty.
-8. The Holm procedure is the primary method for controlling multiple comparisons in confirmatory analyses.
-9. The Benjamini–Hochberg procedure may be used for appropriate exploratory analyses involving multiple hypotheses. Bonferroni remains a supplementary reference method.
-10. Sample adequacy will be assessed through a combination of a minimum operational sample requirement and statistical power considerations.
-11. Temporal stability will be assessed through a combination of aggregate performance, performance across temporal windows, baseline comparisons, statistical uncertainty and evidence of performance degradation.
-12. Model-family approval and the operational authorisation of individual trained-model versions remain separate decisions.
-13. Final Test observations must remain isolated from feature selection, model selection, hyperparameter optimisation, threshold selection and strategy refinement.
-
-### 12.2 Outstanding Quantitative and Statistical Parameters
-
-The following parameters remain to be specified and documented before confirmatory model evaluation:
-
-1. Minimum operational sample sizes for global and temporal metrics.
-2. The treatment of zero predictions and zero realised returns in Directional Accuracy.
-3. The minimum practically meaningful improvement over baselines, where applicable.
-4. HAC estimation choices, including lag selection and the assumptions required for valid inference.
-5. Block bootstrap design, including block-length selection and the number of resamples.
-6. The precise definition of confirmatory and exploratory hypothesis families.
-7. The allocation of comparisons to multiple-testing families, including model-to-model and model-to-baseline comparisons across the three forecast horizons.
-8. Quantitative temporal-stability criteria and the minimum evidence required to support a stability assessment.
-9. Model-family selection criteria and approval thresholds.
-10. Exact implementation and reporting requirements for each evaluation metric.
-11. The treatment and reporting of missing forecasts in comparative evaluation.
-12. The statistical power analysis methodology and the assumptions used to assess sample adequacy.
-
-These parameters must be defined without using Final Test results to select or tune the evaluation procedure.
-
-### 12.3 Operational and Implementation Requirements
-
-The following requirements must also be specified before the relevant evaluation activities are authorised:
-
-1. The detailed prediction contract and additional operational checks.
-2. The rules for recording predictions, model versions, forecast cut-offs and training eligibility.
-3. The handling of forecasts whose target outcomes have not yet matured.
-4. The procedures for ensuring that compared models are evaluated on common observations.
-5. The reporting of inconclusive results and insufficient sample sizes.
-6. The documentation required to authorise a trained-model version for operational use.
-
-Any operational authorisation must remain distinct from methodological approval of a model family.
-
-### 12.4 Approval Gate
-
-Approval of this protocol establishes the methodological framework but does not, by itself, authorise model training, confirmatory model evaluation, backtesting or paper trading.
-
-Before confirmatory evaluation begins, the outstanding statistical parameters, hypothesis families, sample adequacy requirements and quantitative decision criteria must be documented and reviewed.
-
-The approved temporal validation design must be preserved. The Final Test must not be used to select models, tune parameters, establish thresholds or revise the evaluation criteria.
-
-Any proposed change to these requirements must be documented, justified and explicitly approved before implementation.
+These open items do not invalidate the approved methodological decisions above; they limit the claims and activities that may proceed until resolved.
 
 ## Conclusion
 
-This protocol establishes the approved methodological framework for evaluating return forecasts, comparing models with predefined baselines, accounting for temporal dependence, controlling multiple comparisons and assessing sample adequacy and temporal stability.
-
-The methodological approaches have been approved, but several quantitative parameters and operational requirements remain open.
-
-The next step is to finalise the outstanding statistical and operational specifications, followed by the feature-availability and preprocessing specifications.
-
-No model training, hyperparameter optimisation, backtesting or paper trading is authorised by this document alone.
+This protocol defines the metric conventions, baselines, paired comparisons, operational sample minimums, HAC/Newey–West lag rules, Moving Block Bootstrap settings, multiple-testing controls and reporting requirements for the project’s forecast evaluation. It preserves the separation between predictive evidence, model-family selection, operational authorisation and economic evaluation. No model training or trading activity is authorised by this document alone.
