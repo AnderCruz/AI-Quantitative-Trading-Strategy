@@ -1,0 +1,40 @@
+{
+  "ticker": "LLOY.L",
+  "model": "mlp_regression",
+  "model_parameters": {
+    "hidden_layer_sizes": [
+      64,
+      32
+    ],
+    "activation": "relu",
+    "solver": "adam",
+    "alpha": 0.001,
+    "batch_size": 32,
+    "learning_rate_init": 0.001,
+    "max_iter": 500,
+    "early_stopping": false,
+    "random_state": 42
+  },
+  "horizons": [
+    1,
+    5,
+    10
+  ],
+  "development_start": "2016-10-24",
+  "development_end": "2023-10-20",
+  "validation_start": "2023-10-23",
+  "validation_end": "2025-10-22",
+  "latest_input_session": "2025-10-22",
+  "historical_observations": 2731,
+  "minimum_training_samples": 500,
+  "prediction_count": 1505,
+  "prediction_counts_by_horizon": {
+    "1": 506,
+    "5": 502,
+    "10": 497
+  },
+  "final_test_data_used": false,
+  "backtesting_performed": false,
+  "predictions_file": "mlp_validation_predictions.csv",
+  "metrics_file": "mlp_validation_metrics.csv"
+}
