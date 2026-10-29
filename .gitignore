@@ -35,4 +35,5 @@ reports/data_quality/
 .vscode/
 .idea/
 .DS_Store
-Thumbs.db
+Thumbs.db.venv/
+.env
