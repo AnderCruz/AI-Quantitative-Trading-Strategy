@@ -218,3 +218,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Additional environment protection
+.env.*
+!.env.example
+
+# Operating system
+.DS_Store
+Thumbs.db
