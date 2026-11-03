@@ -1,0 +1,24 @@
+asset:
+  ticker: "NG.L"
+  name: "National Grid plc"
+  instrument_type: "equity"
+  exchange: "LSE"
+  currency: "GBP"
+  sector: "Utilities"
+  market_timezone: "Europe/London"
+
+provider:
+  name: "yahoo_finance"
+  symbol: "NG.L"
+
+acquisition:
+  frequency: "1d"
+  period: "max"
+  auto_adjust: false
+  actions: true
+  repair: false
+  keepna: true
+  prepost: false
+  rounding: false
+  progress: false
+  threads: false
