@@ -1,0 +1,44 @@
+dataset:
+  dataset_id: UK_SONIA
+  dataset_name: Sterling Overnight Index Average
+  description: Historical daily SONIA observations published by the Bank of England.
+provider:
+  name: bank_of_england
+  source_type: iadb
+  series_code: IUDSOIA
+  source_page: sonia_database
+data:
+  frequency: business_daily
+  unit: percent_per_annum
+  currency: GBP
+  observation_type: overnight_interest_rate
+  adjustment: none
+acquisition:
+  mode: full_historical
+  preserve_original_values: true
+  preserve_source_dates: true
+  source_format: csv
+temporal:
+  observation_date_required: true
+  publication_date_required: false
+  publication_date_policy: capture_when_available
+  timezone: Europe/London
+  publication_lag: next_london_business_day
+  availability_timestamp_required: false
+  availability_timestamp_policy: capture_when_verifiable
+  publication_schedule:
+    distributors: 09:00 next London business day
+    bank_of_england_database: by 10:00 next London business day
+    timezone: Europe/London
+licensing:
+  status: pending_verification
+  commercial_use_approved: false
+  redistribution_approved: false
+storage:
+  provider_directory: bank_of_england
+  dataset_directory: sonia
+  format:
+  - csv
+  - parquet
+  manifest_required: true
+  checksum_algorithm: sha256

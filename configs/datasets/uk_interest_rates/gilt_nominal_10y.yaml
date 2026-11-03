@@ -1,0 +1,52 @@
+dataset:
+  dataset_id: UK_GILT_NOMINAL_10Y
+  dataset_name: UK Nominal Government Spot Yield — 10 Year
+  description: Daily ten-year nominal UK government spot yield from the Bank of England
+    estimated yield curve.
+provider:
+  name: bank_of_england
+  source_type: yield_curve_archive
+  curve_type: nominal_government_liability
+  measure: spot
+  maturity_years: 10
+  source_page: yield_curves_statistical_release
+  curve_scope: whole_curve
+data:
+  frequency: business_daily
+  unit: percent_per_annum
+  currency: GBP
+  observation_type: spot_yield
+  compounding: continuous
+  adjustment: none
+acquisition:
+  mode: full_historical
+  preserve_original_values: true
+  preserve_source_dates: true
+  source_format: zip
+  archive_type: daily_government_liability_curve
+  archive_shared_with:
+  - UK_GILT_NOMINAL_2Y
+temporal:
+  observation_date_required: true
+  publication_date_required: false
+  publication_date_policy: capture_when_available
+  publication_lag: next_london_business_day
+  timezone: Europe/London
+  availability_timestamp_required: false
+  availability_timestamp_policy: capture_when_verifiable
+  publication_schedule:
+    daily_curve: by 12:00 next London business day
+    historical_archive_updates: by the end of the second London business day of each
+      month
+    timezone: Europe/London
+  historical_revisions: preserve_as_new_acquisition_version
+licensing:
+  status: pending_verification
+  commercial_use_approved: false
+  redistribution_approved: false
+storage:
+  provider_directory: bank_of_england
+  dataset_directory: gilt_nominal_10y
+  original_archive_required: true
+  manifest_required: true
+  checksum_algorithm: sha256

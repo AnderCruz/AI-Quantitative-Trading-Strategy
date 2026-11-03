@@ -1,0 +1,40 @@
+dataset:
+  dataset_id: UK_BANK_RATE
+  dataset_name: Official Bank Rate
+  description: Historical official Bank of England Bank Rate observations.
+provider:
+  name: bank_of_england
+  source_type: iadb
+  series_code: IUDBEDR
+  source_page: bank_rate_database
+data:
+  frequency: business_daily
+  unit: percent_per_annum
+  currency: GBP
+  observation_type: interest_rate
+  adjustment: none
+acquisition:
+  mode: full_historical
+  preserve_original_values: true
+  preserve_source_dates: true
+  source_format: csv
+temporal:
+  observation_date_required: true
+  publication_date_required: false
+  publication_date_policy: capture_when_available
+  timezone: Europe/London
+  availability_timestamp_required: false
+  availability_timestamp_policy: capture_when_verifiable
+  publication_schedule: not_assumed
+licensing:
+  status: pending_verification
+  commercial_use_approved: false
+  redistribution_approved: false
+storage:
+  provider_directory: bank_of_england
+  dataset_directory: bank_rate
+  format:
+  - csv
+  - parquet
+  manifest_required: true
+  checksum_algorithm: sha256
