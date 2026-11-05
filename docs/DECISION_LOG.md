@@ -3,7 +3,7 @@
 
 **Document status:** Active
 **Project phase:** Phase 2 — Multi-Asset Data Acquisition
-**Last updated:** 3 November 2026
+**Last updated:** 5 November 2026
 
 ---
 
@@ -219,3 +219,91 @@ Any material change to:
 must be discussed and explicitly approved before implementation.
 
 New decisions should be added with a unique identifier, date, status, rationale, consequences and links to relevant implementation evidence.
+
+
+## 5. Phase 2 Closure Decisions
+
+**Project phase:** Phase 2 — Multi-Asset Data Acquisition
+**Decision date:** 5 November 2026
+
+---
+
+## D138 — ONS MM23 and QNA Semantic Validation
+
+**Status:** APPROVED
+**Date:** 5 November 2026
+
+**Decision:** Approve the semantic validation of the five selected ONS series and the use of the MM23 and QNA source files for their respective logical datasets.
+
+**Approved mappings:**
+
+| Logical dataset ID | ONS series code | Description | Frequency |
+|---|---|---|---|
+| `UK_CPI` | `D7G7` | CPI Annual Rate — All Items | Monthly |
+| `UK_CORE_CPI` | `DKO8` | CPI 12-month rate excluding energy, food, alcoholic beverages and tobacco | Monthly |
+| `UK_CPIH` | `L55O` | CPIH Annual Rate — All Items | Monthly |
+| `UK_REAL_GDP` | `ABMI` | GDP — Chained Volume Measures, Seasonally Adjusted | Quarterly |
+| `UK_GDP_GROWTH` | `IHYQ` | GDP Quarter-on-Quarter Growth, CVM SA | Quarterly |
+
+**Approved acquisition design:**
+- Use one original MM23 CSV acquisition for the three inflation datasets.
+- Use one original QNA CSV acquisition for the two GDP datasets.
+- Preserve the downloaded source files without transformation during acquisition.
+- Retain acquisition manifests, configuration hashes, file sizes and SHA-256 checksums.
+- Keep the limitations concerning historical revisions and point-in-time availability explicit.
+
+**Evidence:**
+- ONS MM23 and QNA CSV files were fetched and inspected.
+- All five approved series codes were found in the `CDID` row.
+- Series titles, units, observation counts and date labels were inspected.
+- The ONS connector's targeted tests and the full test suite passed at the time of implementation.
+
+**Consequences and limitations:**
+- Semantic identification is accepted for acquisition purposes.
+- This decision does not constitute formal data quality approval or approval for modelling.
+- The current ONS CSV release date is not the historical publication timestamp for every observation.
+- Historical revisions and point-in-time vintages remain unresolved and must be assessed in the appropriate subsequent phase.
+- Licensing and commercial-use permissions remain subject to dataset-level review.
+
+---
+
+## D139 — Phase 2 Closure
+
+**Status:** APPROVED
+**Date:** 5 November 2026
+
+**Decision:** Approve the formal closure of Phase 2 — Multi-Asset Data Acquisition, with outstanding risks and limitations retained in the project records.
+
+**Closure scope:**
+- Group A — Equities.
+- Group B — UK Interest Rates.
+- Group C — UK Inflation and Macroeconomic Data.
+
+**Closure evidence:**
+- Approved acquisition configurations and provider connectors were implemented.
+- The selected acquisitions were executed and recorded with acquisition identifiers and manifests.
+- Raw file integrity checks were completed for the acquired datasets where specified in the group records.
+- Group C ONS semantic validation was approved under D138.
+- Group C ONS Raw file size, manifest status and SHA-256 checks passed.
+- The relevant implementation and tests were committed to the repository.
+
+**Explicit exclusions:**
+- Phase 2 closure does not approve the datasets for modelling.
+- Formal financial data quality assessment and temporal alignment are not included.
+- Feature engineering, target construction, forecasting, strategy research and backtesting are not included.
+- Source families not acquired in Groups A–C are not represented as acquired or validated by this closure.
+
+**Outstanding risks:**
+- Provider and dataset licensing, including commercial use and redistribution.
+- Yahoo Finance's unofficial access interface and unresolved usage rights.
+- Dataset-specific Bank of England reuse terms.
+- ONS historical revisions and point-in-time vintage availability.
+- Currency and adjustment assumptions requiring independent verification.
+- Market calendar completeness, missing observations and cross-provider temporal alignment.
+- The distinction between file integrity and financial data quality.
+- FRED/ALFRED training restriction: no model training without written authorisation expressly resolving the relevant restriction.
+
+**Consequences:**
+- Phase 2 is recorded as completed.
+- Phase 3 — Data Quality Assessment & Temporal Alignment remains not started and requires its own explicit approval.
+- No change is made to the project's long-only, research/backtesting/paper-trading-only restrictions.

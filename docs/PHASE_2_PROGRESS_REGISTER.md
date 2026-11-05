@@ -1,19 +1,28 @@
 # Phase 2 — Multi-Asset Data Acquisition
-## Progress Register
+## Final Progress Register
 
 **Project:** AI Quantitative Trading & Strategy Optimisation System
-**Status:** In Progress
-**Last updated:** 3 November 2026
+**Status:** **COMPLETED — CLOSURE APPROVED**
+**Last updated:** 5 November 2026
+**Closure decision:** D139
+**Related decision:** D138 — ONS MM23 and QNA Semantic Validation
 
 ---
 
 ## 1. Phase Objective
 
-Implement the approved multi-asset data acquisition architecture and acquire the initial historical datasets required for subsequent data quality assessment and research.
+Implement the approved multi-asset acquisition architecture and acquire the initial historical datasets selected for the project.
 
-Phase 2 covers acquisition architecture, provider configuration, historical acquisition, storage, integrity verification and acquisition documentation.
+Phase 2 covered:
+- acquisition architecture and provider connectors;
+- dataset and asset configuration;
+- historical data acquisition;
+- immutable Raw persistence;
+- acquisition metadata, manifests and checksums;
+- technical acquisition and file-integrity verification;
+- documentation of source, licensing and temporal limitations.
 
-It does not include formal financial data quality approval, feature engineering or model development.
+Phase 2 did **not** include formal financial data quality approval, temporal alignment, feature engineering, target construction or model development.
 
 ---
 
@@ -23,9 +32,11 @@ It does not include formal financial data quality approval, feature engineering 
 |---|---|---|
 | 0 | Project Definition & Technical Planning | Approved |
 | 1 | Financial and Macroeconomic Data Sources Investigation | Approved |
-| 2 | Multi-Asset Data Acquisition | In Progress |
+| 2 | Multi-Asset Data Acquisition | **Completed — Closure Approved** |
 | 3 | Data Quality Assessment & Temporal Alignment | Not Started |
 | 4–16 | Subsequent research and implementation phases | Not Started |
+
+Phase 3 must not begin until the user explicitly approves it.
 
 ---
 
@@ -37,195 +48,264 @@ It does not include formal financial data quality approval, feature engineering 
 | 2.2.7 | Acquisition architecture design and approval | Completed |
 | P0 | Initial National Grid historical acquisition | Completed |
 | Group A | Equities acquisition and technical integrity verification | Completed |
-| Group B | UK interest rates acquisition | Pending |
-| Group C | UK energy data acquisition | Pending |
-| Remaining sources | Acquisition according to the approved source priority and roadmap | Pending |
-| Phase 2 closure | Consolidated evidence, documentation and approval | Pending |
+| Group B | UK interest rates acquisition | Completed |
+| Group C | UK inflation and macroeconomic data acquisition | Completed |
+| Phase 2 closure | Consolidated evidence, documentation and approval | Completed — D139 |
+
+**Scope note:** This register records the completion of the approved acquisition workstreams listed above. It does not imply that every potential source family identified during the wider source investigation has been acquired. Energy, foreign exchange, credit and company-fundamental datasets are not represented as acquired by this register.
 
 ---
 
-## 4. Completed Deliverables
+## 4. Acquisition Architecture
 
-### 4.1 Phase 2.1 — Source and Variable Consolidation
+The approved architecture is provider-independent and modular, using independent provider connectors and external configuration.
 
-The project established eight data groups:
+Key capabilities implemented across the acquisition workstreams include:
+- YAML configuration and Pydantic validation;
+- provider-specific acquisition adapters;
+- separation of acquisition from downstream processing;
+- historical acquisition support;
+- immutable Raw acquisition directories;
+- unique acquisition identifiers;
+- manifests and SHA-256 checksums;
+- atomic persistence patterns;
+- configuration hashes;
+- structured acquisition status and metadata;
+- provider-specific error handling and retry principles;
+- auditability and data lineage.
 
-1. Target asset.
-2. Comparable companies.
-3. Equity markets.
-4. Rates and fixed income.
-5. Energy and commodities.
-6. Foreign exchange.
-7. Macroeconomic indicators.
-8. Credit and company fundamentals.
+The BoE IADB connector was generalised for multiple series while retaining the existing Bank Rate compatibility interface. A separate ONS-specific connector was implemented; the BoE connector was not modified to accommodate ONS.
 
-Acquisition priorities were defined, with NG.L as the initial pilot.
+---
 
-### 4.2 Phase 2.2.7 — Acquisition Architecture
+## 5. Group A — Equities
 
-The acquisition architecture was completed and approved.
+### 5.1 Approved instruments
 
-Key deliverables include:
+| Instrument | Provider symbol | Role |
+|---|---|---|
+| National Grid | `NG.L` | Pilot / target asset |
+| SSE plc | `SSE.L` | Sector peer |
+| Severn Trent | `SVT.L` | Sector peer |
+| FTSE 100 | `^FTSE` | Market benchmark |
 
-- Provider-independent adapter architecture.
-- External YAML asset configurations.
-- Pydantic configuration validation.
-- Historical, fixed-range and incremental acquisition modes.
-- Immutable Raw acquisition storage.
-- Acquisition manifests and SHA-256 checksums.
-- Atomic file commits.
-- Dataset-specific watermarks and revision handling.
-- Retry, backoff, rate-limit and circuit-breaker principles.
-- Structured logging, audit trail and data lineage.
-
-### 4.3 P0 — National Grid Historical Acquisition
-
-**Asset:** National Grid
-**Provider symbol:** NG.L
-**Provider:** Yahoo Finance
-**Frequency:** Daily
-
-| Attribute | Result |
-|---|---|
-| Acquisition ID | `20261103T000455Z_8b505769` |
-| Records | 7,890 |
-| First observation | 1995-12-11 |
-| Last observation | 2026-11-02 |
-| Manifest status | success |
-| Formats | CSV and Parquet |
-
-Files are stored under:
-
-`data/raw/market/yahoo_finance/NG.L/`
-
-The acquisition report is:
-
-`reports/acquisition/NG_L_acquisition_report.md`
-
-### 4.4 Group A — Equities
-
-**Scope:** SSE.L, SVT.L and ^FTSE.
+### 5.2 Acquisition evidence
 
 | Asset | Acquisition ID | Records | First observation | Last observation |
 |---|---|---:|---|---|
+| NG.L | `20261103T000455Z_8b505769` | 7,890 | 1995-12-11 | 2026-11-02 |
 | SSE.L | `20261103T002507Z_de101edb` | 9,060 | 1991-06-17 | 2026-11-02 |
 | SVT.L | `20261103T002515Z_fdac38df` | 9,455 | 1989-12-11 | 2026-11-02 |
 | ^FTSE | `20261103T002524Z_9c7eb120` | 11,004 | 1984-01-03 | 2026-11-02 |
-| **Total** | | **29,519** | | |
+| **Total** | | **37,409** | | |
 
-The acquisition produced CSV, Parquet and manifest files for each instrument.
+The NG.L acquisition was completed as the initial pilot. Group A subsequently added SSE.L, SVT.L and the FTSE 100 benchmark.
 
-**Technical integrity verification: PASSED**
+### 5.3 Verification and artefacts
 
-The verification confirmed:
+- CSV and Parquet files were acquired.
+- File sizes and SHA-256 checksums were checked against manifests.
+- CSV and Parquet contents were compared after in-memory normalisation.
+- Record counts, date ranges and columns were checked against manifest metadata.
 
-- CSV and Parquet files exist.
-- File sizes match manifest metadata.
-- SHA-256 checksums match.
-- CSV and Parquet contents match after in-memory normalisation.
-- Record counts, columns and date ranges match manifest metadata.
+**Verification result:** Passed, according to the acquisition verification evidence recorded for Group A.
 
-Verification script:
+Relevant files:
+- `configs/assets/ng_l.yaml`
+- `configs/assets/sse_l.yaml`
+- `configs/assets/svt_l.yaml`
+- `configs/assets/ftse_100.yaml`
+- `scripts/acquire_market_data.py`
+- `scripts/verify_acquisition_integrity.py`
+- `reports/acquisition/NG_L_acquisition_report.md`
+- `reports/acquisition/EQUITIES_GROUP_A_ACQUISITION_REPORT.md`
 
-`scripts/verify_acquisition_integrity.py`
-
-Consolidated report:
-
-`reports/acquisition/EQUITIES_GROUP_A_ACQUISITION_REPORT.md`
-
-**Scope limitation:** These checks establish file integrity and acquisition consistency. They do not establish financial data quality, corporate-action correctness, completeness of trading sessions, absence of market-data errors or temporal alignment suitability.
+**Limitation:** These checks establish file integrity and acquisition consistency. They do not establish financial data quality, corporate-action correctness, complete trading-session coverage or suitability for temporal alignment.
 
 ---
 
-## 5. Current Repository Deliverables
+## 6. Group B — UK Interest Rates
 
-| Path | Purpose | Status |
+### 6.1 Approved datasets
+
+| Logical dataset | Provider/source | Series or instrument | Acquisition result |
+|---|---|---|---|
+| `UK_BANK_RATE` | Bank of England IADB | `IUDBEDR` | Acquired |
+| `UK_SONIA` | Bank of England IADB | `IUDSOIA` | Acquired |
+| `UK_GILT_NOMINAL_2Y` | Bank of England yield curve archive | 2-year nominal maturity | Source archive acquired |
+| `UK_GILT_NOMINAL_10Y` | Bank of England yield curve archive | 10-year nominal maturity | Source archive acquired |
+
+The 2-year and 10-year series are to be derived from the original yield-curve source during a later processing stage. The original archive was not transformed during acquisition.
+
+### 6.2 Bank Rate
+
+- Acquisition ID: `20261103T225333Z_db83b1b8`
+- Observations: 13,104
+- Date range: 1975-01-02 to 2026-11-02
+- Preliminary checks recorded: zero duplicate dates, zero missing values, numeric values and chronological ordering.
+- Raw CSV size: 231,447 bytes.
+- Manifest status: success.
+- No watermark was updated.
+
+### 6.3 SONIA
+
+- Acquisition ID: `20261103T224853Z_fc90361c`
+- Observations: 7,496
+- Date range: 1997-03-03 to 2026-10-30
+- Raw CSV size: 148,599 bytes.
+- SHA-256: `20ec43b3bdf2cd9b42f064d444e4ba902169f6690b42ca80b8d8a75673d6d6ce`
+- Manifest status: success.
+- No watermark was updated.
+
+### 6.4 Gilt nominal yield curve archive
+
+- Acquisition ID: `20261105T125522Z_eec59b41`
+- Raw path: `data/raw/macro/bank_of_england/yield_curve_archive/acquisition_20261105T125522Z_eec59b41`
+- Original ZIP size: 39,275,836 bytes.
+- SHA-256: `3b0c30fd38b9148731d66f7c2b1f9f57a84890b0cf021e4bd1a2c803b868211a`
+- Eight Excel workbooks were validated inside the ZIP archive.
+- The original ZIP and manifest were persisted.
+- No extraction or transformation was performed during acquisition.
+- No watermark was updated.
+
+### 6.5 Implementation and tests
+
+- Generic BoE IADB configuration and acquisition support were implemented.
+- Bank Rate compatibility interfaces were retained.
+- The yield-curve archive acquisition script and concurrency-safe directory commit logic were implemented.
+- The full test suite after the yield-curve work reported 141 passing tests.
+- The ONS work subsequently extended the full suite to 167 passing tests.
+
+Relevant files include:
+- `scripts/acquire_boe_yield_curves.py`
+- BoE IADB acquisition connector and associated tests
+- `tests/acquisition/test_boe_yield_curves.py`
+
+**Limitation:** The yield-curve concurrency test used two threads in one process; it did not establish independent-process concurrency behaviour.
+
+---
+
+## 7. Group C — UK Inflation and Macroeconomic Data
+
+### 7.1 Approved ONS datasets
+
+| Logical dataset ID | ONS code | Description | Frequency |
+|---|---|---|---|
+| `UK_CPI` | `D7G7` | CPI Annual Rate — All Items | Monthly |
+| `UK_CORE_CPI` | `DKO8` | CPI 12-month rate excluding energy, food, alcoholic beverages and tobacco | Monthly |
+| `UK_CPIH` | `L55O` | CPIH Annual Rate — All Items | Monthly |
+| `UK_REAL_GDP` | `ABMI` | GDP — Chained Volume Measures, Seasonally Adjusted | Quarterly |
+| `UK_GDP_GROWTH` | `IHYQ` | GDP Quarter-on-Quarter Growth, CVM SA | Quarterly |
+
+### 7.2 Semantic validation
+
+The five series codes were located in the ONS CSV `CDID` row. Their titles, units, observation counts and date labels were inspected.
+
+Observed series counts and ranges at acquisition inspection:
+
+| Series | Observations | First observation | Last observation |
+|---|---:|---|---|
+| D7G7 | 641 | 1989 | 2026 SEP |
+| DKO8 | 641 | 1989 | 2026 SEP |
+| L55O | 641 | 1989 | 2026 SEP |
+| ABMI | 364 | 1948 | 2026 Q2 |
+| IHYQ | 285 | 1955 Q2 | 2026 Q2 |
+
+Semantic validation was formally approved under **D138 — ONS MM23 and QNA Semantic Validation**.
+
+### 7.3 Raw acquisitions
+
+**Inflation — MM23**
+- Acquisition ID: `20261105T132954Z_b4ce351c`
+- Path: `data/raw/macro/ons/inflation/acquisition_20261105T132954Z_b4ce351c`
+- File: `original_data.csv`
+- Size: 23,228,735 bytes
+- SHA-256: `ed5b20bea47cda76f38519c17d4c48f7d2b003aad5b3c69aa8f4d4f805f6ebc1`
+- Dataset IDs: `UK_CPI`, `UK_CORE_CPI`, `UK_CPIH`
+
+**GDP — QNA**
+- Acquisition ID: `20261105T132956Z_60b29116`
+- Path: `data/raw/macro/ons/gdp/acquisition_20261105T132956Z_60b29116`
+- File: `original_data.csv`
+- Size: 2,246,438 bytes
+- SHA-256: `8dfccc4c35c0ede47b77b9ad3783db82223da44823d93c6eabc0f33641f79583`
+- Dataset IDs: `UK_REAL_GDP`, `UK_GDP_GROWTH`
+
+Both manifests report successful acquisition, the expected dataset IDs, the source endpoint, retrieval timestamp, configuration SHA-256, file size and file SHA-256. Independent verification confirmed that the physical file sizes and SHA-256 hashes match the manifests.
+
+### 7.4 Implementation and tests
+
+Relevant files:
+- `configs/datasets/uk_macro/inflation.yaml`
+- `configs/datasets/uk_macro/gdp.yaml`
+- `scripts/acquire_ons_data.py`
+- `tests/acquisition/test_ons_acquisition.py`
+
+The ONS connector uses ONS-specific Pydantic models and supports configuration validation, fetch-only operation and explicit persistence. The BoE connector was not modified to accommodate ONS.
+
+- ONS targeted tests: 26 passed.
+- Full test suite after ONS implementation: 167 passed.
+
+**Temporal limitation:** The release date in the current ONS CSV is metadata for the current release; it must not be interpreted as the historical availability timestamp for every observation. Historical revisions and point-in-time vintages remain unresolved.
+
+---
+
+## 8. Repository and Version-Control Evidence
+
+Recorded implementation commits:
+- `b141056 feat: implement multi-asset equity data acquisition`
+- `90ba4c6 feat: add BoE yield curve and ONS macro data acquisition`
+
+The second commit includes the ONS configurations, ONS connector, yield-curve acquisition script and associated tests.
+
+Raw market and macroeconomic data are excluded from Git and remain in local Raw storage.
+
+The repository status was reported clean after the implementation commit was pushed. A final status check should be performed when applying this documentation update.
+
+---
+
+## 9. Licensing, Governance and Outstanding Risks
+
+| Risk / limitation | Phase 2 assessment | Required treatment |
 |---|---|---|
-| `configs/assets/ng_l.yaml` | National Grid configuration | Created |
-| `configs/assets/sse_l.yaml` | SSE configuration | Created |
-| `configs/assets/svt_l.yaml` | Severn Trent configuration | Created |
-| `configs/assets/ftse_100.yaml` | FTSE 100 configuration | Created |
-| `scripts/acquire_market_data.py` | Configurable multi-asset acquisition | Implemented |
-| `scripts/verify_acquisition_integrity.py` | Group A integrity verification | Implemented |
-| `reports/acquisition/NG_L_acquisition_report.md` | NG.L acquisition report | Created |
-| `reports/acquisition/EQUITIES_GROUP_A_ACQUISITION_REPORT.md` | Group A consolidated report | Created |
-| `docs/DECISION_LOG.md` | Confirmed project decisions | Created |
-| `docs/PHASE_2_PROGRESS_REGISTER.md` | Phase 2 progress register | Created |
+| Yahoo Finance licensing | No commercial or redistribution rights assumed; unofficial interface | Review provider terms and permitted use before any commercial use |
+| Bank of England licensing | Terms require dataset-level assessment; no blanket commercial clearance assumed | Verify relevant dataset terms before redistribution or commercial use |
+| ONS licensing | Dataset-level licensing and commercial permissions remain subject to review | Verify licence and attribution obligations before commercial use |
+| Point-in-time macro data | Current releases may include historical revisions | Investigate vintage and historical release availability before point-in-time modelling |
+| Macro publication timing | Current file release date is not the release timestamp of every historical observation | Use observation-level/as-of publication metadata where available; do not backdate availability |
+| Equity currency metadata | GBP is configured for LSE instruments; independent verification remains necessary | Verify in data quality assessment |
+| Corporate actions and adjustments | Correctness has not been assessed | Assess adjustment conventions and corporate actions in Phase 3 |
+| Market calendars and completeness | Acquisition record counts do not prove complete session coverage | Assess expected sessions, gaps and duplicates in Phase 3 |
+| Cross-provider temporal alignment | Not assessed in Phase 2 | Assess calendars, time zones, release lags and as-of joins in Phase 3 |
+| Yield-curve concurrency | Test evidence covers two threads in one process | Treat independent-process concurrency as unverified |
+| FRED/ALFRED | Training prohibited without written authorisation expressly resolving the restriction | Maintain the restriction; revisit only during the later commercialisation review |
 
-Raw market data is stored locally under `data/raw/` and excluded from Git.
-
----
-
-## 6. Dependencies and Environment
-
-Current pinned dependencies:
-
-- yfinance 1.7.0
-- pyarrow 26.0.0
-- pandas 3.1.0
-- PyYAML 6.0.3
-- pydantic 2.14.2
-
-Environment reported by the user:
-
-- Ubuntu 24.04.4 LTS
-- Python 3.12.3
-- Git 2.43.0
+No risk listed above is silently treated as resolved by Phase 2 closure.
 
 ---
 
-## 7. Outstanding Work
+## 10. Phase 2 Exit Criteria Review
 
-The following work remains before Phase 2 can be considered complete:
+| Exit criterion | Result |
+|---|---|
+| Approved acquisition workstreams addressed | Passed for Groups A, B and C |
+| Required acquisitions recorded with identifiers and manifests | Passed for the acquired datasets |
+| Technical integrity checks completed | Passed as documented in the group records |
+| Provenance and licensing limitations documented | Passed |
+| Acquisition reports and project registers prepared | This final register and consolidated report complete the documentation set |
+| Outstanding risks recorded | Passed |
+| Explicit user approval for closure | Approved — D139 |
 
-1. Acquire the approved UK interest-rate datasets (Group B).
-2. Acquire the approved UK energy datasets (Group C).
-3. Continue with the remaining approved source groups according to their priorities.
-4. Record acquisition parameters, identifiers, manifests and limitations for every dataset.
-5. Verify technical integrity and acquisition consistency.
-6. Produce consolidated acquisition reports.
-7. Update this register and the Decision Log as approved work is completed.
-8. Review outstanding licensing, access and data-availability constraints.
-9. Conduct a Phase 2 completion review and obtain explicit approval.
-
----
-
-## 8. Risks and Limitations
-
-| Risk | Current assessment | Mitigation |
-|---|---|---|
-| Yahoo Finance licensing | Commercial and redistribution rights not established | Restrict current use to exploratory research and review terms before commercial use |
-| Provider data quality | Not formally assessed | Defer formal assessment to Phase 3 |
-| Currency metadata | GBP configured for LSE instruments; independent provider verification remains necessary | Verify during data quality assessment |
-| Historical completeness | Acquisition record counts alone do not establish completeness | Assess calendars and missing observations in Phase 3 |
-| Corporate actions | Raw fields retained where available; correctness not yet assessed | Validate adjustment conventions and corporate actions in Phase 3 |
-| Macro publication timing | Point-in-time controls required | Preserve publication timestamps and vintages |
-| Provider availability | External provider access may change | Maintain independent connectors and acquisition audit records |
+**Important:** Passing Phase 2 exit criteria does not approve the data for modelling or establish financial data quality.
 
 ---
 
-## 9. Phase 2 Exit Criteria
+## 11. Final Phase 2 Status and Gate
 
-Phase 2 may only be closed when:
+**Phase 2 — Multi-Asset Data Acquisition: COMPLETED — CLOSURE APPROVED.**
 
-- All approved acquisition groups have been addressed or explicitly deferred with justification.
-- Required datasets have acquisition records and manifests.
-- Technical integrity checks have been completed.
-- Data provenance and licensing limitations are documented.
-- Acquisition reports and project registers are updated.
-- Outstanding risks and limitations are recorded.
-- The user explicitly approves Phase 2 closure.
+Closure was explicitly approved by the user on 5 November 2026 and recorded as D139.
 
-Passing these criteria does not automatically approve datasets for modelling.
+**Phase 3 — Data Quality Assessment & Temporal Alignment: NOT STARTED.**
 
----
-
-## 10. Current Gate
-
-**Phase 2 status: IN PROGRESS**
-
-Group A is complete at the acquisition and technical integrity level.
-
-Formal data quality assessment and temporal alignment remain outside the current phase and must not begin until Phase 2 is completed and explicitly approved.
-
-**Next planned workstream:** Group B — UK Interest Rates.
+Phase 3 requires separate explicit approval. No Phase 3 implementation, transformation pipeline, feature engineering or modelling work is authorised by this Phase 2 closure.
