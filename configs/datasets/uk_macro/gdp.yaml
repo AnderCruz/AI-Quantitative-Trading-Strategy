@@ -1,0 +1,54 @@
+dataset:
+  dataset_ids:
+    - UK_REAL_GDP
+    - UK_GDP_GROWTH
+  dataset_name: UK Quarterly National Accounts
+  description: >
+    Official UK quarterly national accounts dataset containing
+    real GDP and quarterly GDP growth.
+
+provider:
+  name: office_for_national_statistics
+  source_type: published_dataset_csv
+  dataset_code: QNA
+  source_page: https://www.ons.gov.uk/economy/grossdomesticproductgdp/datasets/quarterlynationalaccounts/current
+  source_endpoint: https://www.ons.gov.uk/file?uri=%2Feconomy%2Fgrossdomesticproductgdp%2Fdatasets%2Fquarterlynationalaccounts%2Fcurrent%2Fqna.csv
+
+series:
+  - series_code: ABMI
+    dataset_id: UK_REAL_GDP
+    description: GDP - Chained Volume Measures, Seasonally Adjusted
+    frequency: quarterly
+    unit: GBP million
+  - series_code: IHYQ
+    dataset_id: UK_GDP_GROWTH
+    description: GDP Quarter-on-Quarter Growth, CVM Seasonally Adjusted
+    frequency: quarterly
+    unit: percentage
+
+acquisition:
+  mode: full_historical
+  preserve_original_values: true
+  preserve_source_dates: true
+  source_format: csv
+
+temporal:
+  observation_date_required: true
+  publication_date_required: false
+  publication_date_policy: capture_when_available
+  timezone: Europe/London
+  availability_timestamp_required: false
+  availability_timestamp_policy: capture_when_verifiable
+
+licensing:
+  status: pending_verification
+  commercial_use_approved: false
+  redistribution_approved: false
+
+storage:
+  provider_directory: ons
+  dataset_directory: gdp
+  format:
+    - csv
+  manifest_required: true
+  checksum_algorithm: sha256

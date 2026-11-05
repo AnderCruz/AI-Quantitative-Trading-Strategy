@@ -1,0 +1,60 @@
+dataset:
+  dataset_ids:
+    - UK_CPI
+    - UK_CORE_CPI
+    - UK_CPIH
+  dataset_name: UK Consumer Price Inflation
+  description: >
+    Official UK consumer price inflation dataset containing CPI,
+    core CPI and CPIH annual inflation rates.
+
+provider:
+  name: office_for_national_statistics
+  source_type: published_dataset_csv
+  dataset_code: MM23
+  source_page: https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindices/current
+  source_endpoint: https://www.ons.gov.uk/file?uri=%2Feconomy%2Finflationandpriceindices%2Fdatasets%2Fconsumerpriceindices%2Fcurrent%2Fmm23.csv
+
+series:
+  - series_code: D7G7
+    dataset_id: UK_CPI
+    description: CPI Annual Rate - All Items
+    frequency: monthly
+    unit: percentage
+  - series_code: DKO8
+    dataset_id: UK_CORE_CPI
+    description: Core CPI 12-month rate
+    frequency: monthly
+    unit: percentage
+  - series_code: L55O
+    dataset_id: UK_CPIH
+    description: CPIH Annual Rate - All Items
+    frequency: monthly
+    unit: percentage
+
+acquisition:
+  mode: full_historical
+  preserve_original_values: true
+  preserve_source_dates: true
+  source_format: csv
+
+temporal:
+  observation_date_required: true
+  publication_date_required: false
+  publication_date_policy: capture_when_available
+  timezone: Europe/London
+  availability_timestamp_required: false
+  availability_timestamp_policy: capture_when_verifiable
+
+licensing:
+  status: pending_verification
+  commercial_use_approved: false
+  redistribution_approved: false
+
+storage:
+  provider_directory: ons
+  dataset_directory: inflation
+  format:
+    - csv
+  manifest_required: true
+  checksum_algorithm: sha256
